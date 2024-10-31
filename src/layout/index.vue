@@ -86,7 +86,7 @@
   import { PageHeader } from './components/Header';
   import { useProjectSetting } from '@/hooks/setting/useProjectSetting';
   import { useDesignSetting } from '@/hooks/setting/useDesignSetting';
-  import { useRoute } from 'vue-router';
+  import { useRoute, useRouter, } from 'vue-router';
   import { useProjectSettingStore } from '@/store/modules/projectSetting';
 
   const { getDarkTheme } = useDesignSetting();
@@ -169,6 +169,14 @@
       isMobile.value = false;
     }
     collapsed.value = false;
+
+    // 跳转到移动端首页
+    if (isMobile.value) {
+      const router = useRouter();
+      router.replace({
+        path: '/mobile',
+      })
+    }
   };
 
   const watchWidth = () => {

@@ -38,7 +38,7 @@ export const Alova = createAlova({
   baseURL: apiUrl,
   statesHook: VueHook,
   // 关闭全局请求缓存
-  // cacheFor: null,
+  cacheFor: null,
   // 全局缓存配置
   // cacheFor: {
   //   POST: {
@@ -146,7 +146,6 @@ export const userAuthAlova = createAlova({
       if (method.meta?.isReturnNativeResponse) {
         return res;
       }
-      console.log('g res ', res)
       // 请根据自身情况修改数据结构
       const { message, status, error, } = res;
       if (status != 200) {

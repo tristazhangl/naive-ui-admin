@@ -5,6 +5,9 @@ import { NaiveUiResolver } from 'unplugin-vue-components/resolvers';
 import vue from '@vitejs/plugin-vue';
 import vueJsx from '@vitejs/plugin-vue-jsx';
 
+import AutoImport from 'unplugin-auto-import/vite';
+import { VantResolver } from '@vant/auto-import-resolver';
+
 import { configHtmlPlugin } from './html';
 import { configCompressPlugin } from './compress';
 
@@ -20,7 +23,10 @@ export function createVitePlugins(viteEnv: ViteEnv, isBuild: boolean) {
     // 按需引入NaiveUi且自动创建组件声明
     Components({
       dts: true,
-      resolvers: [NaiveUiResolver()],
+      resolvers: [NaiveUiResolver(), VantResolver()],
+    }),
+    AutoImport({
+      resolvers: [VantResolver()],
     }),
   ];
 
