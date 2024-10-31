@@ -55,6 +55,7 @@ export interface GlobConfig {
   useMock: boolean;
   fileUrl?: string;
   loggerMock: boolean;
+  authApiUrl: string;
 }
 
 export interface GlobEnvConfig {
@@ -74,4 +75,7 @@ export interface GlobEnvConfig {
   VITE_USE_MOCK: boolean;
   // 是否开启控制台打印 mock 请求信息
   VITE_LOGGER_MOCK: boolean;
+
+  // 授权接口地址
+  VITE_GLOB_AUTH_API_URL: string;
 }

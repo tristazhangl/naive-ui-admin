@@ -3,7 +3,7 @@ import { store } from '@/store';
 import { ACCESS_TOKEN, CURRENT_USER, IS_SCREENLOCKED } from '@/store/mutation-types';
 import { ResultEnum } from '@/enums/httpEnum';
 
-import { getUserInfo as getUserInfoApi, login } from '@/api/system/user';
+import { getInfo, getUserInfo as getUserInfoApi, login } from '@/api/system/user';
 import { storage } from '@/utils/Storage';
 
 export type UserInfoType = {
@@ -64,31 +64,40 @@ export const useUserStore = defineStore({
     // 登录
     async login(params: any) {
       const response = await login(params);
-      const { result, code } = response;
-      if (code === ResultEnum.SUCCESS) {
-        const ex = 7 * 24 * 60 * 60;
-        storage.set(ACCESS_TOKEN, result.token, ex);
-        storage.set(CURRENT_USER, result, ex);
-        storage.set(IS_SCREENLOCKED, false);
-        this.setToken(result.token);
-        this.setUserInfo(result);
-      }
+      console.log('log re ', response)
+      const data = response;
+      const ex = 7 * 24 * 60 * 60;
+      storage.set(ACCESS_TOKEN, data, ex);
+      storage.set(IS_SCREENLOCKED, false);
+      this.setToken(data);
       return response;
     },
 
     // 获取用户信息
     async getInfo() {
-      const data = await getUserInfoApi();
-      const { result } = data;
+      let data = await getInfo();
+      this.setUserInfo(data);
+      const result = await getUserInfoApi(data.userId);
       if (result.permissions && result.permissions.length) {
-        const permissionsList = result.permissions;
+        let permissionsList = result.permissions;
+        permissionsList = permissionsList.filter(one => one.permissionName.indexOf('菜单-') > -1).map(one => {
+          const item = {...one};
+          item.permissionName = item.permissionName.replace("菜单-", '');
+          return item;
+        }).map(one => {
+          const item = {
+            label: one.permissionName,
+            value: one.permissionName,
+          }
+          return item;
+        });
+        data.permissions = permissionsList; 
         this.setPermissions(permissionsList);
-        this.setUserInfo(result);
       } else {
         throw new Error('getInfo: permissionsList must be a non-null array !');
       }
-      this.setAvatar(result.avatar);
-      return result;
+      // this.setAvatar(result.avatar);
+      return data;
     },
 
     // 登出

@@ -11,7 +11,7 @@ import { PageEnum } from '@/enums/pageEnum';
 import { ResultEnum } from '@/enums/httpEnum';
 import { isUrl } from '@/utils';
 
-const { useMock, apiUrl, urlPrefix, loggerMock } = useGlobSetting();
+const { useMock, apiUrl, urlPrefix, authApiUrl, loggerMock } = useGlobSetting();
 
 const mockAdapter = createAlovaMockAdapter([...mocks], {
   // 全局控制是否启用mock接口，默认为true
@@ -59,7 +59,7 @@ export const Alova = createAlova({
     const token = userStore.getToken;
     // 添加 token 到请求头
     if (!method.meta?.ignoreToken && token) {
-      method.config.headers['token'] = token;
+      method.config.headers['Authorization'] = "Bearer " + token;
     }
     // 处理 api 请求前缀
     const isUrlStr = isUrl(method.url as string);
@@ -72,53 +72,94 @@ export const Alova = createAlova({
   },
   responded: {
     onSuccess: async (response, method) => {
-      const res = (response.json && (await response.json())) || response.body;
+      let res;
+      // 获取内容类型
+      const contentType = response.headers.get('content-type');
+  
+      // 根据内容类型处理数据
+      if (contentType && contentType.includes('application/json')) {
+        // 如果是JSON，则解析JSON数据
+        res = response.json && await response.json();
+      } else if (contentType && contentType.includes('text/plain')) {
+        // 如果是文本，则读取文本数据
+        res = response.text && await response.text();
+        return res;
+      } else {
+        // 默认处理其他类型或抛出错误
+        res = response.body;
+      }
 
       // 是否返回原生响应头 比如：需要获取响应头时使用该属性
       if (method.meta?.isReturnNativeResponse) {
         return res;
       }
       // 请根据自身情况修改数据结构
-      const { message, code, result } = res;
+      const { message, status, error, } = res;
+      if (status != 200) {
+        return Promise.reject(new Error(message || "Error"));
+      }
 
       // 不进行任何处理，直接返回
-      // 用于需要直接获取 code、result、 message 这些信息时开启
+      // 用于需要直接获取 code、result、 message 这些信息时开启N
       if (method.meta?.isTransformResponse === false) {
         return res.data;
       }
 
-      // @ts-ignore
-      const Message = window.$message;
-      // @ts-ignore
-      const Modal = window.$dialog;
-
-      const LoginPath = PageEnum.BASE_LOGIN;
-      if (ResultEnum.SUCCESS === code) {
-        return result;
-      }
-      // 需要登录
-      if (code === 912) {
-        Modal?.warning({
-          title: '提示',
-          content: '登录身份已失效，请重新登录!',
-          okText: '确定',
-          closable: false,
-          maskClosable: false,
-          onOk: async () => {
-            storage.clear();
-            window.location.href = LoginPath;
-          },
-        });
-      } else {
-        // 可按需处理错误 一般情况下不是 912 错误，不一定需要弹出 message
-        Message?.error(message);
-        throw new Error(message);
-      }
-    },
+      return res;
+    }
   },
 });
 
-// 项目，多个不同 api 地址，可导出多个实例
-// export const AlovaTwo = createAlova({
-//   baseURL: 'http://localhost:9001',
-// });
+export const userAuthAlova = createAlova({
+  baseURL: authApiUrl, // 'http://59.52.36.181:9702',
+  statesHook: VueHook,
+  requestAdapter: mockAdapter,
+  cacheFor: null,
+  beforeRequest(method) {
+    const userStore = useUser();
+    const token = userStore.getToken;
+    // 添加 token 到请求头
+    if (!method.meta?.ignoreToken && token) {
+      method.config.headers['Authorization'] = `Bearer ` + token;
+    }
+  },
+  responded: {
+    onSuccess: async (response, method) => {
+      let res;
+      // 获取内容类型
+      const contentType = response.headers.get('content-type');
+  
+      // 根据内容类型处理数据
+      if (contentType && contentType.includes('application/json')) {
+        // 如果是JSON，则解析JSON数据
+        res = response.json && await response.json();
+      } else if (contentType && contentType.includes('text/plain')) {
+        // 如果是文本，则读取文本数据
+        res = response.text && await response.text();
+        return res;
+      } else {
+        // 默认处理其他类型或抛出错误
+        res = response.body;
+      }
+
+      // 是否返回原生响应头 比如：需要获取响应头时使用该属性
+      if (method.meta?.isReturnNativeResponse) {
+        return res;
+      }
+      console.log('g res ', res)
+      // 请根据自身情况修改数据结构
+      const { message, status, error, } = res;
+      if (status != 200) {
+        return Promise.reject(new Error(message || "Error"));
+      }
+
+      // 不进行任何处理，直接返回
+      // 用于需要直接获取 code、result、 message 这些信息时开启N
+      if (method.meta?.isTransformResponse === false) {
+        return res.data;
+      }
+
+      return res;
+    }
+  }
+});

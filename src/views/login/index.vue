@@ -3,9 +3,7 @@
     <div class="view-account-header"></div>
     <div class="view-account-container">
       <div class="view-account-top">
-        <div class="view-account-top-logo">
-          <img :src="websiteConfig.loginImage" alt="" />
-        </div>
+        <div class="view-account-top-title">设材超市管理</div>
         <div class="view-account-top-desc">{{ websiteConfig.loginDesc }}</div>
       </div>
       <div class="view-account-form">
@@ -39,44 +37,10 @@
               </template>
             </n-input>
           </n-form-item>
-          <n-form-item class="default-color">
-            <div class="flex justify-between">
-              <div class="flex-initial">
-                <n-checkbox v-model:checked="autoLogin">自动登录</n-checkbox>
-              </div>
-              <div class="flex-initial order-last">
-                <a href="javascript:">忘记密码</a>
-              </div>
-            </div>
-          </n-form-item>
           <n-form-item>
             <n-button type="primary" @click="handleSubmit" size="large" :loading="loading" block>
               登录
             </n-button>
-          </n-form-item>
-          <n-form-item class="default-color">
-            <div class="flex view-account-other">
-              <div class="flex-initial">
-                <span>其它登录方式</span>
-              </div>
-              <div class="flex-initial mx-2">
-                <a href="javascript:">
-                  <n-icon size="24" color="#2d8cf0">
-                    <LogoGithub />
-                  </n-icon>
-                </a>
-              </div>
-              <div class="flex-initial mx-2">
-                <a href="javascript:">
-                  <n-icon size="24" color="#2d8cf0">
-                    <LogoFacebook />
-                  </n-icon>
-                </a>
-              </div>
-              <div class="flex-initial" style="margin-left: auto">
-                <a href="javascript:">注册账号</a>
-              </div>
-            </div>
           </n-form-item>
         </n-form>
       </div>
@@ -105,7 +69,7 @@
   const LOGIN_NAME = PageEnum.BASE_LOGIN_NAME;
 
   const formInline = reactive({
-    username: 'admin',
+    username: '',
     password: '123456',
     isCaptcha: true,
   });
@@ -134,17 +98,15 @@
         };
 
         try {
-          const { code, message: msg } = await userStore.login(params);
+          await userStore.login(params);
           message.destroyAll();
-          if (code == ResultEnum.SUCCESS) {
-            const toPath = decodeURIComponent((route.query?.redirect || '/') as string);
-            message.success('登录成功，即将进入系统');
-            if (route.name === LOGIN_NAME) {
-              router.replace('/');
-            } else router.replace(toPath);
-          } else {
-            message.info(msg || '登录失败');
-          }
+          const toPath = decodeURIComponent((route.query?.redirect || '/') as string);
+          message.success('登录成功，即将进入系统');
+          if (route.name === LOGIN_NAME) {
+            router.replace('/');
+          } else router.replace(toPath);
+        } catch (error){
+          message.info(error || '登录失败');
         } finally {
           loading.value = false;
         }
@@ -177,6 +139,10 @@
       &-desc {
         font-size: 14px;
         color: #808695;
+      }
+      &-title {
+        font-size: 32px;
+        color: #26313C;
       }
     }
 

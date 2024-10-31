@@ -56,8 +56,16 @@ export function createRouterGuards(router: Router) {
       return;
     }
 
-    const userInfo = await userStore.getInfo();
-
+    let userInfo;
+    try {
+      userInfo = await userStore.getInfo();
+    } catch(error) {
+      // 可能需要刷新token
+      window['$message'].error(error || "Has Error");
+      next(`/login?redirect=${to.path}`);
+      
+    }
+    
     const routes = await asyncRouteStore.generateRoutes(userInfo);
 
     // 动态添加可访问路由表
