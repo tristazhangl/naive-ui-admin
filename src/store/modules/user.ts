@@ -75,6 +75,7 @@ export const useUserStore = defineStore({
 
     // 获取用户信息
     async getInfo() {
+      console.log('track!!')
       let data = await getInfo();
       this.setUserInfo(data);
       const result = await getUserInfoApi(data.userId);

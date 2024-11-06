@@ -69,8 +69,8 @@
   const LOGIN_NAME = PageEnum.BASE_LOGIN_NAME;
 
   const formInline = reactive({
-    username: '',
-    password: '',
+    username: 'zhangyq4686',
+    password: 'Smr#0726',
     isCaptcha: true,
   });
 

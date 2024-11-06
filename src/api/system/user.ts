@@ -14,9 +14,6 @@ export function getUserInfo(userId) {
     headers: {
       'fangda-appId': 'energy-analysis-sys'
     },
-    meta: {
-      isReturnNativeResponse: true,
-    },
   });
 }
 
@@ -47,9 +44,6 @@ export function getInfo(userId) {
       'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
     },
     params: param,
-    meta: {
-      isReturnNativeResponse: true,
-    }
   });
 }
 

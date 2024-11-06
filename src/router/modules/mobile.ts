@@ -13,6 +13,7 @@ const routes: Array<RouteRecordRaw> = [
       title: '设材超市',
       icon: renderIcon(ProfileOutlined),
       sort: 3,
+      hidden: true,
     },
     children: [
       {
