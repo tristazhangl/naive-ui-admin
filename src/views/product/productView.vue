@@ -6,12 +6,7 @@
       </template>
       <template #extra>
         <n-space>
-          <n-button>催更</n-button>
-          <n-dropdown :options="options" placement="bottom-start">
-            <n-button :bordered="false" style="padding: 0 4px">
-              ···
-            </n-button>
-          </n-dropdown>
+          <!-- <n-button>催更</n-button> -->
         </n-space>
       </template>
     </n-page-header>
@@ -51,7 +46,7 @@
         <div class="main-item-content">
           <n-image-group>
             <n-space inline>
-              <div v-for="item in eiPictures" :key="item.photoId" class="image-wrap">
+              <div v-for="(item,idx) in eiPictures" :key="item.photoId" class="image-wrap">
                 <n-image
                   width="142"
                   height="142"
@@ -63,7 +58,8 @@
                   <n-icon
                     size="18"
                     class="cursor-pointer"
-                    @click="movePicture(item, 'left')"
+                    :class="[idx > 0 ?'is-active': '']"
+                    @click="movePicture(item,idx, 'left')"
                   >
                     <SwapLeftOutlined />
                   </n-icon>
@@ -85,7 +81,8 @@
                   <n-icon
                     size="18"
                     class="cursor-pointer"
-                    @click="movePicture(item, 'right')"
+                    :class="[idx < eiPictures.length-1 ?'is-active': '']"
+                    @click="movePicture(item, idx,'right')"
                   >
                     <SwapRightOutlined />
                   </n-icon>
@@ -117,68 +114,15 @@
       <div class="main-item">
         <div class="main-item-label">库存表</div>
         <div class="main-item-content">
-
-          <n-table :bordered="false" :single-line="false">
-            <thead>
-              <tr>
-                <th>姓名</th>
-                <th>性别</th>
-                <th>城市</th>
-                <th>生日</th>
-                <th width="150">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Ah jung</td>
-                <td>男</td>
-                <td>深圳</td>
-                <td>1993-11-09</td>
-                <td>
-                  <n-space>
-                    <n-button size="small" type="error">删除</n-button>
-                    <n-button size="small" type="info">查看</n-button>
-                  </n-space>
-                </td>
-              </tr>
-              <tr>
-                <td>西门飞雪</td>
-                <td>男</td>
-                <td>广州</td>
-                <td>1991-09-11</td>
-                <td>
-                  <n-space>
-                    <n-button size="small" type="error">删除</n-button>
-                    <n-button size="small" type="info">查看</n-button>
-                  </n-space>
-                </td>
-              </tr>
-              <tr>
-                <td>泰坦巨人</td>
-                <td>男</td>
-                <td>北京</td>
-                <td>1990-11-03</td>
-                <td>
-                  <n-space>
-                    <n-button size="small" type="error">删除</n-button>
-                    <n-button size="small" type="info">查看</n-button>
-                  </n-space>
-                </td>
-              </tr>
-              <tr>
-                <td>猎魔人</td>
-                <td>女</td>
-                <td>上海</td>
-                <td>1992-03-11</td>
-                <td>
-                  <n-space>
-                    <n-button size="small" type="error">删除</n-button>
-                    <n-button size="small" type="info">查看</n-button>
-                  </n-space>
-                </td>
-              </tr>
-            </tbody>
-          </n-table>
+          <n-data-table
+            class="batch-item-table"
+            :columns="batchColumns"
+            :data="batchItems"
+            :pagination="pagination"
+            :bordered="false"
+            :max-height="250"
+            :scroll-x="1090"
+          />
         </div>
       </div>
     </n-card>
@@ -199,7 +143,7 @@
   import { useRoute } from 'vue-router';
   import type { UploadFileInfo, UploadInst, } from 'naive-ui'
   import { useRequest, } from 'alova/client';
-
+  import moment from 'moment';
   import {
     SwapLeftOutlined,
     SwapRightOutlined,
@@ -210,10 +154,12 @@
     getPictureData,
     rmProductPic,
     modifyProductPic,
+    getProductInfo,
   } from '@/api/product/index'
   import type { EiPicItem, } from '@/api/product/index';
 
   import { columns, ListData } from './columns';
+import { dir } from 'console';
 
   const route = useRoute();
   // const viewData = reactive<{nowItem: ListData | null}>({
@@ -222,6 +168,7 @@
   const queryEiId = ref<string>('');
   const eiPictures = ref<EiPicItem[]>([]);
   const nowItem = ref<ListData|null>(null);
+  const batchItems = ref<ListData[]>();
   const showModal = ref(false)
   const previewImageUrl = ref('')
   const fileList = ref<UploadFileInfo>();
@@ -233,13 +180,29 @@
     showModal.value = true
   }
 
-  function movePicture(item, dire) {
-
+  function movePicture(item:EiPicItem, idx:number, dire) {
+    let next = null;
+    let index = -1;
+    if (dire == 'left') {
+      index = idx - 1;
+    } else if (dire == 'right') {
+      index = idx + 1;
+    }
+    if (index >= 0 && index < eiPictures.value.length) {
+      next = eiPictures.value[index];
+      const calls = [modifyProductPic(item.photoId, index),
+        modifyProductPic(next.photoId, idx)
+      ]
+      Promise.all(calls).then(data => { 
+        if (data.every(one => one)) {
+          loadPictures();
+        }
+      })
+    }
   }
 
   function delPicture(item:EiPicItem) {
     rmProductPic(item.photoId).then(data => {
-      console.log(data)
       if (data == true) {
         loadPictures();
       }
@@ -280,6 +243,14 @@
     }).finally(() => {
     })
   }
+  async function loadEInfo() {
+    const eiId = queryEiId.value;
+    const data = await getProductInfo(eiId);
+    if (data.length) {
+      nowItem.value = data[0];
+    }
+    batchItems.value = data;
+  }
 
   async function loadPictures() {
     
@@ -293,18 +264,105 @@
   }
 
   onMounted(() => {
-    const data = localStorage.getItem('productViewData');
-    if (data) {
-      let item: ListData = JSON.parse(data);
-      console.log('item ', item)
-      const recordId = route.query.id;
-      queryEiId.value = recordId;
-      if (item.equipmentInfoId == recordId) {
-        nowItem.value = item;
-        loadPictures();
-      } 
-    }
+    const recordId = route.query.id;
+    queryEiId.value = recordId;
+    loadEInfo().then(() => {
+      loadPictures();
+    })
   })
+
+  const batchColumns = [
+    {
+      title: '批次号',
+      key: 'batchId',
+      width: 156,
+      fixed: 'left',
+    },
+    {
+      title: '仓库',
+      key: 'storeName',
+      width: 132,
+      ellipsis: true,
+      fixed: 'left',
+    },
+    {
+      title: '货位',
+      key: 'cargoName',
+      minWidth: 120,
+      ellipsis: true,
+      fixed: 'left',
+    },
+    {
+      title: '单位',
+      key: 'unitName',
+      minWidth: 120,
+    },
+    {
+      title: '数量',
+      key: 'number',
+      minWidth: 120,
+    },
+
+    /* {
+      title: '单重',
+      key: 'pieceWeight',
+      minWidth: 120,
+    },
+    {
+      title: '总重',
+      key: 'weight',
+      minWidth: 120,
+    }, */
+    {
+      title: '入库价格',
+      key: 'inPrice',
+      minWidth: 120,
+    },
+    {
+      title: '出库价格',
+      key: 'outPrice',
+      minWidth: 120,
+    },
+    {
+      title: '除税单价',
+      key: 'noTaxPrice',
+      minWidth: 120,
+    },
+    {
+      title: '含税总价',
+      key: 'totalPrice',
+      minWidth: 120,
+    },
+    {
+      title: '除税总价',
+      key: 'noTaxTotalPrice',
+      minWidth: 120,
+    },
+    {
+      title: '入库类型',
+      key: 'docType',
+      width: 120,
+    },
+    {
+      title: '入库时间',
+      key: 'storeTime',
+      width: 120,
+      render(row) {
+        let val = row.storeTime;
+        if (!val) {
+          return val;
+        }
+        const showTime = moment(val).format('yyyy-MM-DD');
+        return showTime;
+      }
+    },
+    {
+      title: '备注',
+      key: 'remark',
+      ellipsis: true,
+      ellipsisComponent: 'ellipsis',
+    },
+  ]
 </script>
 
 <style lang="less" scoped>
@@ -365,6 +423,12 @@
       height: 160px;
       border: 1px solid var(--n-border-color);
       border-bottom-width: 0px;
+    }
+    .batch-item-table {
+      width: calc(100vw - 400px);
+    }
+    .n-icon.is-active {
+      color: #2080f0;
     }
   }
 </style>

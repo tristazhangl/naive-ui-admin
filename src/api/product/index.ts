@@ -14,6 +14,13 @@ export function getProductList(params) {
   );
 }
 
+// 获取设材详情信息
+export function getProductInfo(eiId:string) {
+  return Alova.Get(`/supermarket/store/getInfoByEiId/${eiId}`, 
+  );
+}
+
+
 // 批量上传图片
 export function uploadEIPicture(eiId, fileList) {
   const formdata = new FormData();
@@ -76,12 +83,15 @@ export function modifyProductPic(photoId, position) {
   const params = {
     dataOrder: position,
   }
-  return Alova.Post(`/supermarket/photo/modifys/${photoId}`, 
+  return Alova.Post(`/supermarket/photo/modify/${photoId}`, 
     qs.stringify(params),
     {
       headers: {
         "content-type": ContentTypeEnum.FORM_URLENCODED,
       },
+      /* shareRequest 和 cacheFor 组合使用*/
+      shareRequest: false,
+      cacheFor: null,
     }
   );
 }
