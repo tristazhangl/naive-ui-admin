@@ -1,7 +1,6 @@
 import { Alova } from '@/utils/http/alova/index';
 import { ContentTypeEnum } from '@/enums/httpEnum';
 import qs from 'qs'
-import { useRequest } from 'alova/client';
 
 //获取table
 export function getProductList(params) {
@@ -31,6 +30,8 @@ export function uploadEIPicture(eiId, fileList) {
       headers: {
         "content-type": ContentTypeEnum.FORM_DATA,
       },
+      /* shareRequest 和 cacheFor 组合使用*/
+      shareRequest: false,
       cacheFor: null,
     }
   )

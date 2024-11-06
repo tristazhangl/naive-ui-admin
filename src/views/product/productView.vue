@@ -103,7 +103,7 @@
             trigger-class="upload-trigger-box"
             :custom-request="customUploadPicture"
             @preview="handlePreview"
-          />
+          /> <!-- :default-upload="false" -->
         </div>
       </div>
     </n-card>
@@ -198,7 +198,7 @@
   import { defineComponent, ref, onMounted, reactive, } from 'vue'
   import { useRoute } from 'vue-router';
   import type { UploadFileInfo, UploadInst, } from 'naive-ui'
-  import { useRequest } from 'alova/client';
+  import { useRequest, } from 'alova/client';
 
   import {
     SwapLeftOutlined,
@@ -246,23 +246,11 @@
     })
   }
 
+
   /* 没效果，一次选多个图片，也是一个图片一个图片的触发 */
   function handlePicChange(files) {
     fileList.value = files;
-    const eiId = queryEiId.value;
-    if (!eiId) {
-      return;
-    }
-    const fileArr = files.map(one => one.file);
-    uploadEIPicture(eiId, fileArr).then(res => {
-      if (res == true) {
-        loadPictures();
-      }
-    }).catch(err => {
-    }).finally(() => {
-      fileList.value = [];
-      eiPicUpload.value && eiPicUpload.value.clear();
-    })
+    
   }
 
   const customUploadPicture = ({
@@ -275,17 +263,13 @@
     onError,
     onProgress
   }: UploadCustomRequestOptions) => {
-    console.log('upload.. ')
     const eiId = queryEiId.value;
     if (!eiId) {
       return;
     }
     const fileArr = [file.file];
-    const { send, onSuccess: uploadSuccess} = useRequest((eiId, fileArr) => {
-      return uploadEIPicture(eiId, fileArr);
-    })
-    send(eiId, fileArr).then(res => {
-      console.log('res ', res)
+    // .send()，手动强制请求
+    uploadEIPicture(eiId, fileArr).then(res => {
       if (res == true) {
         loadPictures();
         onFinish();
@@ -294,9 +278,6 @@
       console.log('err ', err)
       onError();
     }).finally(() => {
-    })
-    uploadSuccess(data => {
-      console.log('up sucess ', data)
     })
   }
 
